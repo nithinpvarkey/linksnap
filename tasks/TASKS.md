@@ -7,8 +7,8 @@ Never put architecture decisions here — those live in CLAUDE.md.
 Never put lessons learned here — those live in LESSONS.md.
 
 Last updated:  April 2026
-Current phase: 0 — Dev team setup
-Overall status: Pre-build. No product code written yet. Setting up the team.
+Current phase: 2 — Core product agents
+Overall status: Phase 1 complete. Next.js running. Ready to build.
 
 ═══════════════════════════════════════════════════════════════
 ## CURRENT SESSION FOCUS
@@ -17,10 +17,10 @@ Overall status: Pre-build. No product code written yet. Setting up the team.
 Read this section first. This is what we are doing right now.
 
   Working on:   Phase 2 — core product agents
-  Next action:  Write lib/types.ts first — all agents depend on it
-  Blocked by:   Owner must paste real API keys into .env.local before Phase 2
-  Owner note:   Phase 1 complete. .env.local created with placeholders.
-                Open .env.local and replace placeholder values with real keys.
+  Next action:  Write lib/types.ts — all agents depend on it
+  Blocked by:   Nothing — API keys confirmed, server running, clear to proceed
+  Owner note:   Phase 1 fully verified. npm run dev confirmed at localhost:3000.
+                Real API keys loaded. Start Phase 2 immediately.
 
 ═══════════════════════════════════════════════════════════════
 ## PROJECT STATUS OVERVIEW
@@ -61,8 +61,8 @@ Update status column as each item is confirmed.
   [ ] Railway                    needed for Phase 4 SnapGIF Docker service
 
   LOCAL SETUP:
-  [x] linksnap/ folder           verified — was empty except planning files
-  [ ] .env.local                 created with placeholders — owner must add real keys
+  [x] linksnap/ folder           verified — pushed to github.com/nithinpvarkey/linksnap
+  [x] .env.local                 real API keys added and confirmed loading
   [x] .env.local.example         created with placeholder values only
   [x] .gitignore                 created — .env.local excluded confirmed
   [x] Next.js initialised        done — npm run dev running at localhost:3000
@@ -341,17 +341,12 @@ Update this at the end of every session. One paragraph maximum.
 This is how context is never lost between sessions.
 
   Session date:  April 2026
-  What was done: Phase 1 complete. Next.js 14 project initialised manually
-                 (create-next-app could not run in non-empty directory).
-                 All files created: package.json, tsconfig.json strict mode,
-                 next.config.mjs with 5 security headers, tailwind, eslint,
-                 .gitignore, .env.local (placeholders), .env.local.example,
-                 all folders from CLAUDE.md structure. npm run dev confirmed
-                 running at localhost:3000 in 1433ms. Both agent sign-offs
-                 approved. npm audit flags 5 vulnerabilities in Next.js 14
-                 that require owner decision — stay on 14 or upgrade.
-  Next action:   Owner adds real API keys to .env.local, then Phase 2 starts
-                 with lib/types.ts
+  What was done: Phase 1 fully complete. Next.js 14.2.35 running at localhost:3000.
+                 Real API keys confirmed loading from .env.local. Git initialised,
+                 committed, pushed to github.com/nithinpvarkey/linksnap via HTTPS.
+                 Decision logged: stay on Next.js 14, review audit at Phase 6.
+                 npm run dev ready in 1500ms with no errors.
+  Next action:   Phase 2 — write lib/types.ts first
 
 ═══════════════════════════════════════════════════════════════
 # END OF TASKS.md

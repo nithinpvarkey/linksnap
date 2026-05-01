@@ -16,11 +16,11 @@ Overall status: Phase 1 complete. Next.js running. Ready to build.
 
 Read this section first. This is what we are doing right now.
 
-  Working on:   Phase 2 — core product agents
-  Next action:  Write lib/types.ts — all agents depend on it
-  Blocked by:   Nothing — API keys confirmed, server running, clear to proceed
-  Owner note:   Phase 1 fully verified. npm run dev confirmed at localhost:3000.
-                Real API keys loaded. Start Phase 2 immediately.
+  Working on:   Phase 3 — Frontend
+  Next action:  Testing Agent review of all Phase 2 files before building any UI
+  Blocked by:   Nothing — Phase 2 fully complete and committed
+  Owner note:   Phase 2 complete — all 12 files built, reviewed, committed.
+                Testing Agent must sign off before any Phase 3 UI work begins.
 
 ═══════════════════════════════════════════════════════════════
 ## PROJECT STATUS OVERVIEW
@@ -28,8 +28,8 @@ Read this section first. This is what we are doing right now.
 
   Phase 0 — Dev team setup          Complete     ████████ 100%
   Phase 1 — Project initialisation  Complete     ████████ 100%
-  Phase 2 — Core product agents     Not started  ░░░░░░░░   0%
-  Phase 3 — Frontend                Not started  ░░░░░░░░   0%
+  Phase 2 — Core product agents     Complete     ████████ 100%
+  Phase 3 — Frontend                In progress  ░░░░░░░░   0%
   Phase 4 — SnapGIF microservice    Not started  ░░░░░░░░   0%
   Phase 5 — Pro tier                Not started  ░░░░░░░░   0%
   Phase 6 — Deploy and launch       Not started  ░░░░░░░░   0%
@@ -146,28 +146,28 @@ Goal: All 4 Layer 1 agents working. URL paste returns a card.
       Free tier limit enforced. Rate limiting active.
 
   LIBRARY FILES — build these first, agents depend on them:
-  [ ] lib/security.ts            URL validation and signed token generation
-  [ ] lib/rateLimit.ts           10 requests per minute per IP
-  [ ] lib/freeTier.ts            3 per day localStorage tracking logic
-  [ ] lib/cache.ts               Vercel KV cache — check before AI calls
-  [ ] lib/streaming.ts           Server-Sent Events helpers
+  [x] lib/security.ts            URL validation and signed token generation
+  [x] lib/rateLimit.ts           10 requests per minute per IP
+  [x] lib/freeTier.ts            3 per day localStorage tracking logic
+  [x] lib/cache.ts               Vercel KV cache — check before AI calls
+  [x] lib/streaming.ts           Server-Sent Events helpers
 
   PRODUCT AGENTS:
-  [ ] agents/scraperAgent.ts     fetch HTML, extract title, text, og:image
-  [ ] agents/summaryAgent.ts     Gemini summary with Kimi and DeepSeek fallbacks
-  [ ] agents/tagAgent.ts         Qwen tags with Gemini and DeepSeek fallbacks
-  [ ] agents/imageAgent.ts       og:image chain — no AI needed
-  [ ] agents/orchestrator.ts     run all 4 agents in parallel, stream results
+  [x] agents/scraperAgent.ts     fetch HTML, extract title, text, og:image
+  [x] agents/summaryAgent.ts     Gemini summary with Kimi and DeepSeek fallbacks
+  [x] agents/tagAgent.ts         Qwen tags with Gemini and DeepSeek fallbacks
+  [x] agents/imageAgent.ts       og:image chain — no AI needed
+  [x] agents/orchestrator.ts     run all 4 agents in parallel, stream results
 
   API ROUTE:
-  [ ] app/api/summarise/route.ts security check, rate limit, orchestrate, stream
+  [x] app/api/summarise/route.ts security check, rate limit, orchestrate, stream
 
   AGENT SIGN-OFF REQUIRED:
-  [ ] Backend Agent — builds all files above
-  [ ] Security Agent — reviews every file before proceeding
+  [x] Backend Agent — builds all files above
+  [x] Security Agent — reviews every file before proceeding
   [ ] Testing Agent — tests all agents including failure scenarios and fallbacks
   [ ] Performance Agent — verifies streaming and parallel execution
-  [ ] Code Review Agent — reviews TypeScript types and error handling
+  [x] Code Review Agent — reviews TypeScript types and error handling
 
   Phase 2 complete when: pasting a URL returns title, image, summary, tags.
 
@@ -340,13 +340,14 @@ Active blockers that are preventing progress. Clear these first.
 Update this at the end of every session. One paragraph maximum.
 This is how context is never lost between sessions.
 
-  Session date:  April 2026
-  What was done: Phase 1 fully complete. Next.js 14.2.35 running at localhost:3000.
-                 Real API keys confirmed loading from .env.local. Git initialised,
-                 committed, pushed to github.com/nithinpvarkey/linksnap via HTTPS.
-                 Decision logged: stay on Next.js 14, review audit at Phase 6.
-                 npm run dev ready in 1500ms with no errors.
-  Next action:   Phase 2 — write lib/types.ts first
+  Session date:  May 2026
+  What was done: Phase 2 fully complete. All 12 files built, reviewed, and committed.
+                 lib/ foundation (types, security, rateLimit, freeTier, cache, streaming),
+                 4 product agents (scraper, summary, tag, image), orchestrator, and API
+                 route. Zero TypeScript errors throughout. Security Agent and Code Review
+                 Agent approved every file. Upstash Redis used instead of deprecated
+                 Vercel KV. Built-in Node 25 fetch used instead of node-fetch.
+  Next action:   Testing Agent review of all Phase 2 files, then Phase 3 Frontend
 
 ═══════════════════════════════════════════════════════════════
 # END OF TASKS.md

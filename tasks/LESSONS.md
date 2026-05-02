@@ -17,6 +17,11 @@ Decision: stay on Next.js 14. Upgrading to Next.js 16
 would break our approved stack and agent files.
 Review again at Phase 6 before launch.
 
+LESSON 011 — Phase 2 Testing
+--testPathPattern is removed in Jest 30.
+Correct flag is --testPathPatterns (plural).
+Use npm test -- --testPathPatterns=filename instead.
+
 ═══════════════════════════════════════════════════════════════
 # END OF LESSONS.md
 ═══════════════════════════════════════════════════════════════

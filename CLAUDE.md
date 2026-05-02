@@ -1,4 +1,4 @@
-# CLAUDE.md — LinkSnap Master Project File
+# CLAUDE.md — LinkSnapr Master Project File
 
 Read this entire file before doing anything in this project.
 When in doubt — re-read this file. When still in doubt — stop and ask the owner.
@@ -76,8 +76,8 @@ HOW TO COMMUNICATE WITH THE OWNER:
 ## PART 3 — WHAT WE ARE BUILDING
 ═══════════════════════════════════════════════════════════════
 
-Product name:     LinkSnap
-Parent brand:     SnapKeep ecosystem — LinkSnap is product number one
+Product name:     LinkSnapr
+Parent brand:     SnapKeep ecosystem — LinkSnapr is product number one
 Tagline:          Paste any URL. Understand it instantly.
 Footer:           Powered by SnapKeep
 
@@ -110,7 +110,7 @@ PRO TIER — $3 per month via Dodo Payments:
 Never reorganise this structure without asking the owner first.
 Every file has exactly one home — never move files between folders.
 
-linksnap/
+linksnapr/
 ├── CLAUDE.md                     — this file — read before everything
 ├── .claude/
 │   ├── agents/                   — all 10 dev team agent instruction files

@@ -82,8 +82,8 @@ async function callOpenRouter(model: string, text: string): Promise<string> {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type':  'application/json',
-      'HTTP-Referer':  'https://linksnap.app',
-      'X-Title':       'LinkSnap',
+      'HTTP-Referer':  'https://linksnapr.app',
+      'X-Title':       'LinkSnapr',
     },
     body: JSON.stringify({
       model,

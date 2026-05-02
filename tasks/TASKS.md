@@ -1,4 +1,4 @@
-# TASKS.md — LinkSnap Build Progress
+# TASKS.md — LinkSnapr Build Progress
 
 This file is the single source of truth for what is happening right now.
 Read this at the start of every session before doing anything.
@@ -61,7 +61,7 @@ Update status column as each item is confirmed.
   [ ] Railway                    needed for Phase 4 SnapGIF Docker service
 
   LOCAL SETUP:
-  [x] linksnap/ folder           verified — pushed to github.com/nithinpvarkey/linksnap
+  [x] linksnapr/ folder           verified — pushed to github.com/nithinpvarkey/linksnapr
   [x] .env.local                 real API keys added and confirmed loading
   [x] .env.local.example         created with placeholder values only
   [x] .gitignore                 created — .env.local excluded confirmed
@@ -116,7 +116,7 @@ Goal: Clean Next.js project running locally with correct config.
       No features yet — just the scaffold done right.
 
   SETUP:
-  [x] Verify linksnap/ folder contents — was empty except planning files
+  [x] Verify linksnapr/ folder contents — was empty except planning files
   [x] Initialise Next.js 14 with TypeScript and Tailwind — manual setup
   [x] Configure tsconfig.json strict mode — strict + noImplicitAny + noUncheckedIndexedAccess
   [x] Configure next.config.js security headers — all 5 headers including CSP
@@ -292,7 +292,7 @@ Goal: Product live on the internet. Monitored. Ready for real users.
   [ ] Connect GitHub repo to Vercel
   [ ] Add all environment variables to Vercel dashboard
   [ ] Verify production build succeeds
-  [ ] Custom domain configured — linksnap.app or similar
+  [ ] Custom domain configured — linksnapr.app or similar
   [ ] Test full flow on production URL
 
   RAILWAY DEPLOY:
@@ -331,7 +331,7 @@ Active blockers that are preventing progress. Clear these first.
   Upcoming known blockers:
   - Railway account needed before Phase 4 can start
   - Must have real free tier users before starting Phase 5
-  - linksnap/ folder contents unknown — run ls before Phase 1
+  - linksnapr/ folder contents unknown — run ls before Phase 1
 
 ═══════════════════════════════════════════════════════════════
 ## LAST SESSION SUMMARY

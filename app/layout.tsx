@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'LinkSnap — Paste any URL. Understand it instantly.',
+  title: 'LinkSnapr — Paste any URL. Understand it instantly.',
   description: 'Get an AI summary, tags, and shareable card for any URL.',
 }
 

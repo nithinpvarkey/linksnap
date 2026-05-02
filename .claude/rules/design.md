@@ -3,7 +3,7 @@
 Never deviate from this design system without owner approval.
 
 BRAND:
-  Logo:           ⚡ LinkSnap
+  Logo:           ⚡ LinkSnapr
   Tagline:        Paste any URL. Understand it instantly.
   Footer:         Powered by SnapKeep
   Watermark:      Powered by SnapKeep — on every free card always

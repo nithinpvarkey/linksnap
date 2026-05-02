@@ -1,4 +1,4 @@
-# LESSONS.md — LinkSnap Lessons Learned
+# LESSONS.md — LinkSnapr Lessons Learned
 
 Every time the owner corrects a mistake, a lesson is written here.
 Each lesson is a clear rule to prevent the exact same mistake again.

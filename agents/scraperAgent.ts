@@ -46,7 +46,7 @@ async function fetchWithRedirects(
     const response = await fetch(currentUrl, {
       redirect: 'manual',
       signal,
-      headers: { 'User-Agent': 'LinkSnap/1.0' },
+      headers: { 'User-Agent': 'LinkSnapr/1.0' },
     })
 
     if (response.status < 300 || response.status >= 400) {

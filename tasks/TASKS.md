@@ -17,7 +17,8 @@ Overall status: Phase 1 complete. Next.js running. Ready to build.
 Read this section first. This is what we are doing right now.
 
   Working on:   Phase 3 — Frontend
-  Next action:  Testing Agent review of all Phase 2 files before building any UI
+  Next action:  Testing Agent review of Phase 2 files
+                then begin UI components
   Blocked by:   Nothing — Phase 2 fully complete and committed
   Owner note:   Phase 2 complete — all 12 files built, reviewed, committed.
                 Testing Agent must sign off before any Phase 3 UI work begins.
@@ -125,6 +126,9 @@ Goal: Clean Next.js project running locally with correct config.
   [x] Create .env.local.example with placeholder values only
   [x] Create all folders from structure in CLAUDE.md
   [x] Verify project runs locally — npm run dev ready in 1433ms
+  [x] Product renamed from LinkSnap to LinkSnapr
+      Verified clean — zero TypeScript errors,
+      zero stale references, build passing
 
   AGENT SIGN-OFF REQUIRED:
   [x] Security Agent — next.config.mjs headers and .gitignore — APPROVED

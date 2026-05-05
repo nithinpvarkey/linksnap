@@ -315,6 +315,15 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
           >
             {isRetrying['tags'] ? 'Generating...' : 'Generate tags'}
           </button>
+        ) : status === 'complete' ? (
+          <button
+            aria-label="Retry generating tags"
+            disabled={!!isRetrying['tags']}
+            onClick={() => { handleRetry('tags') }}
+            className="self-start min-h-[44px] px-3 text-sm text-indigo-500 hover:text-indigo-700 disabled:opacity-50 transition-colors"
+          >
+            {isRetrying['tags'] ? 'Generating...' : 'Generate tags'}
+          </button>
         ) : null}
 
         {/* Summary */}

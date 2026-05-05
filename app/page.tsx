@@ -1,3 +1,5 @@
+'use client'
+
 import { LinkCard } from '@/components/LinkCard'
 
 export default function Home() {

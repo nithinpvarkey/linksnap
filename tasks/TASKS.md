@@ -6,9 +6,9 @@ Update this at the end of every session before closing.
 Never put architecture decisions here — those live in CLAUDE.md.
 Never put lessons learned here — those live in LESSONS.md.
 
-Last updated:  April 2026
-Current phase: 2 — Core product agents
-Overall status: Phase 1 complete. Next.js running. Ready to build.
+Last updated:  May 2026
+Current phase: 3 — Frontend
+Overall status: Phase 2 complete. 232 tests passing. Ready for Phase 3.
 
 ═══════════════════════════════════════════════════════════════
 ## CURRENT SESSION FOCUS
@@ -17,20 +17,19 @@ Overall status: Phase 1 complete. Next.js running. Ready to build.
 Read this section first. This is what we are doing right now.
 
   Working on:   Phase 3 — Frontend
-  Next action:  Testing Agent review of Phase 2 files
-                then begin UI components
-  Blocked by:   Nothing — Phase 2 fully complete and committed
-  Owner note:   Phase 2 complete — all 12 files built, reviewed, committed.
-                Testing Agent must sign off before any Phase 3 UI work begins.
+  Next action:  Build components starting with SkeletonCard then LinkCard
+  Blocked by:   Nothing — Phase 2 complete, all 232 tests passing
+  Owner note:   Phase 2 testing complete. Testing Agent signed off.
+                Phase 3 frontend is clear to start.
 
 ═══════════════════════════════════════════════════════════════
 ## PROJECT STATUS OVERVIEW
 ═══════════════════════════════════════════════════════════════
 
-  Phase 0 — Dev team setup          Complete     ████████ 100%
-  Phase 1 — Project initialisation  Complete     ████████ 100%
-  Phase 2 — Core product agents     Complete     ████████ 100%
-  Phase 3 — Frontend                In progress  ░░░░░░░░   0%
+  Phase 0 — Dev team setup          ✅ Complete   ████████ 100%
+  Phase 1 — Project initialisation  ✅ Complete   ████████ 100%
+  Phase 2 — Core product agents     ✅ Complete   ████████ 100%  12 files, 232 tests
+  Phase 3 — Frontend                🟡 Next       ░░░░░░░░   0%
   Phase 4 — SnapGIF microservice    Not started  ░░░░░░░░   0%
   Phase 5 — Pro tier                Not started  ░░░░░░░░   0%
   Phase 6 — Deploy and launch       Not started  ░░░░░░░░   0%
@@ -169,7 +168,7 @@ Goal: All 4 Layer 1 agents working. URL paste returns a card.
   AGENT SIGN-OFF REQUIRED:
   [x] Backend Agent — builds all files above
   [x] Security Agent — reviews every file before proceeding
-  [ ] Testing Agent — tests all agents including failure scenarios and fallbacks
+  [x] Testing Agent — 232 tests across 11 files — all passing — zero failures
   [ ] Performance Agent — verifies streaming and parallel execution
   [x] Code Review Agent — reviews TypeScript types and error handling
 
@@ -345,13 +344,13 @@ Update this at the end of every session. One paragraph maximum.
 This is how context is never lost between sessions.
 
   Session date:  May 2026
-  What was done: Phase 2 fully complete. All 12 files built, reviewed, and committed.
-                 lib/ foundation (types, security, rateLimit, freeTier, cache, streaming),
-                 4 product agents (scraper, summary, tag, image), orchestrator, and API
-                 route. Zero TypeScript errors throughout. Security Agent and Code Review
-                 Agent approved every file. Upstash Redis used instead of deprecated
-                 Vercel KV. Built-in Node 25 fetch used instead of node-fetch.
-  Next action:   Testing Agent review of all Phase 2 files, then Phase 3 Frontend
+  What was done: Phase 2 testing complete. 232 tests across 11 files — all passing.
+                 Zero failures throughout entire test run. Unit tests for all lib/ files
+                 (security, rateLimit, freeTier, cache, streaming) and all agents
+                 (scraper, summary, tag, image, orchestrator). Integration test for the
+                 API route covering validation, rate limiting, concurrency, free tier,
+                 SSE streaming, error handling, and method guards.
+  Next action:   Phase 3 Frontend — build SkeletonCard then LinkCard
 
 ═══════════════════════════════════════════════════════════════
 # END OF TASKS.md

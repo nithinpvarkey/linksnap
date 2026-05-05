@@ -47,6 +47,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
   const [tags,             setTags]             = useState<string[]>([])
   const [imageUrl,         setImageUrl]         = useState('')
   const [imageReceived,    setImageReceived]    = useState(false)
+  const [imageError,       setImageError]       = useState(false)
   const [status,           setStatus]           = useState<CardStatus>('loading')
   const [errors,           setErrors]           = useState<Record<string, string>>({})
   const [isRetrying,       setIsRetrying]       = useState<Record<string, boolean>>({})
@@ -64,6 +65,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
       case 'image': {
         const d = data as { imageUrl?: string }
         setImageReceived(true)
+        setImageError(false)
         setImageUrl(typeof d.imageUrl === 'string' ? d.imageUrl : '')
         break
       }
@@ -180,7 +182,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
     const controller = new AbortController()
 
     setTitle('');         setSummary('');       setTags([])
-    setImageUrl('');      setImageReceived(false)
+    setImageUrl('');      setImageReceived(false);  setImageError(false)
     setStatus('loading'); setErrors({});        setIsRetrying({})
     setShowShareButtons(false)
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -251,7 +253,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
       {/* Image */}
       {!imageReceived ? (
         <div className="aspect-video w-full bg-slate-200 motion-safe:animate-pulse" />
-      ) : imageUrl ? (
+      ) : imageUrl && !imageError ? (
         <div className="aspect-video w-full relative">
           <Image
             src={imageUrl}
@@ -259,6 +261,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
             fill
             className="object-cover"
             unoptimized
+            onError={() => { setImageError(true) }}
           />
         </div>
       ) : (

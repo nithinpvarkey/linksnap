@@ -83,11 +83,7 @@ export async function orchestrate(
 
   await stream.sendEvent('title', { title })
 
-  // ── Section D: Run 3 agents in parallel, stream each as it resolves ────────
-  //
-  // Each run function streams its result immediately on resolve, then returns
-  // the AgentResult for assembly below. TypeScript cannot track assignments to
-  // let variables across async closure boundaries, so we return values instead.
+  // ── Section D: Tags parallel throughout — summary first — image after summary
 
   const runSummary = async (): Promise<AgentResult<SummaryResult>> => {
     const result = await summarisePage(text, title, finalUrl)
@@ -111,31 +107,30 @@ export async function orchestrate(
     return result
   }
 
-  const runImage = async (): Promise<AgentResult<ImageResult>> => {
-    const result   = findImage(scraperData, finalUrl)
+  const runImage = async (summaryText: string): Promise<AgentResult<ImageResult>> => {
+    const result   = findImage(scraperData, finalUrl, summaryText)
     const imageUrl = result.success ? result.data.imageUrl : ''
     await stream.sendEvent('image', { imageUrl })
     return result
   }
 
-  // All 3 fire simultaneously. Each streams its result the moment it resolves.
-  // allSettled waits until all 3 have both finished AND streamed — then we send done.
-  const settled = await Promise.allSettled([runSummary(), runTags(), runImage()])
+  // Tags starts immediately and runs throughout.
+  // Summary runs first — its result feeds the Pollinations image prompt.
+  // Image starts the moment summary resolves, races tags to finish.
+  const tagsPromise   = runTags()
+  const summaryResult = await runSummary()
+  const summaryText   = summaryResult.success ? summaryResult.data.summary : ''
+
+  const [tagsResult, imageResult] = await Promise.all([
+    tagsPromise,
+    runImage(summaryText),
+  ])
 
   // ── Section E: Assemble result and close stream ─────────────────────────────
-  //
-  // Promise.allSettled returns a homogeneous array type — cast each slot to its
-  // known type so TypeScript can narrow the discriminated union correctly.
-  const summarySettled = settled[0] as PromiseSettledResult<AgentResult<SummaryResult>>
-  const tagsSettled    = settled[1] as PromiseSettledResult<AgentResult<TagResult>>
-  const imageSettled   = settled[2] as PromiseSettledResult<AgentResult<ImageResult>>
 
-  const summary  = summarySettled.status === 'fulfilled' && summarySettled.value.success
-    ? summarySettled.value.data.summary : ''
-  const tags     = tagsSettled.status === 'fulfilled' && tagsSettled.value.success
-    ? tagsSettled.value.data.tags       : []
-  const imageUrl = imageSettled.status === 'fulfilled' && imageSettled.value.success
-    ? imageSettled.value.data.imageUrl  : ''
+  const summary  = summaryResult.success ? summaryResult.data.summary  : ''
+  const tags     = tagsResult.success    ? tagsResult.data.tags         : []
+  const imageUrl = imageResult.success   ? imageResult.data.imageUrl    : ''
 
   stream.close(cardId)
 

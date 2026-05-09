@@ -3,32 +3,56 @@ import { extractDomain } from '@/lib/security'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const AGENT_NAME = 'ImageAgent'
+const AGENT_NAME   = 'ImageAgent'
+const STYLE_SUFFIX = '. Digital art, vibrant colors, modern illustration, no text.'
+
+// ─── Private helpers ─────────────────────────────────────────────────────────
+
+function urlToSeed(url: string): number {
+  let hash = 0
+  for (let i = 0; i < url.length; i++) {
+    hash = ((hash << 5) - hash) + url.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+function buildPrompt(subject: string): string {
+  const maxSubject = 200 - STYLE_SUFFIX.length
+  return subject.slice(0, maxSubject).trimEnd() + STYLE_SUFFIX
+}
+
+function buildPollinationsUrl(prompt: string, seed: number): string {
+  return (
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+    `?width=1200&height=630&nologo=true&seed=${seed}`
+  )
+}
 
 // ─── Exported function ────────────────────────────────────────────────────────
 
 /**
- * Selects the best thumbnail image from data already collected by Scraper Agent.
- * Tries og:image first, favicon second, falls back to empty string.
- * Synchronous — no network calls, no AI. Always returns success.
- * An empty imageUrl is a valid result — frontend renders a styled placeholder.
+ * Builds a Pollinations.ai image URL from the page summary.
+ * Synchronous — constructs a URL string, no network call required.
+ * The browser fetches the image directly; Pollinations generates it on demand.
+ * Falls back to domain name as prompt if summary is empty.
+ * Always returns success — a valid Pollinations URL is always constructible.
  */
 export function findImage(
   scraperResult: ScraperResult,
-  url: string,
+  url:           string,
+  summary:       string,
 ): AgentResult<ImageResult> {
   const start  = Date.now()
   const domain = extractDomain(url)
+  const seed   = urlToSeed(url)
 
-  const imageUrl =
-    scraperResult.ogImage.length > 0 ? scraperResult.ogImage :
-    scraperResult.favicon.length > 0 ? scraperResult.favicon :
-    ''
+  const subject = summary.trim().length > 0
+    ? summary
+    : `${domain} website`
 
-  const sourceUsed =
-    scraperResult.ogImage.length > 0 ? 'ogImage' :
-    scraperResult.favicon.length > 0 ? 'favicon' :
-    'empty'
+  const prompt   = buildPrompt(subject)
+  const imageUrl = buildPollinationsUrl(prompt, seed)
 
   const durationMs = Date.now() - start
 
@@ -37,7 +61,8 @@ export function findImage(
       timestamp:  new Date().toISOString(),
       agent:      AGENT_NAME,
       domain,
-      sourceUsed,
+      sourceUsed: 'pollinations',
+      seed,
       durationMs,
       status:     'success',
     })

@@ -1,9 +1,13 @@
-// Unit tests for agents/imageAgent.ts — 8 tests across 4 groups.
+// Unit tests for agents/imageAgent.ts — 10 tests across 4 groups.
 //
 // No mocks required. findImage is a synchronous pure function with no
 // network calls and no AI APIs. extractDomain from @/lib/security is a
 // pure URL utility — it runs without mocking. ScraperResult objects are
 // constructed directly using the makeScraperResult helper.
+//
+// findImage now returns a Pollinations.ai URL built from the summary.
+// ScraperResult.ogImage and .favicon are no longer used — they remain
+// in the signature for API consistency and future use.
 
 import { findImage } from '../../../agents/imageAgent'
 import type { ScraperResult } from '@/lib/types'
@@ -27,65 +31,55 @@ function makeScraperResult(overrides: Partial<ScraperResult> = {}): ScraperResul
 
 describe('findImage', () => {
 
-  // ─── Group 1 — Image selection priority ──────────────────────────────────
+  // ─── Group 1 — Pollinations URL format ───────────────────────────────────
 
-  describe('Group 1 — image selection priority', () => {
+  describe('Group 1 — Pollinations URL format', () => {
 
-    it('should return ogImage when ogImage is set and favicon is empty', () => {
-      // Arrange
-      const scraperResult = makeScraperResult({
-        ogImage: 'https://example.com/og.png',
-        favicon: '',
-      })
-      // Act
-      const result = findImage(scraperResult, 'https://example.com/')
-      // Assert
-      expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.imageUrl).toBe('https://example.com/og.png')
-      }
-    })
-
-    it('should return favicon when ogImage is empty and favicon is set', () => {
-      // Arrange
-      const scraperResult = makeScraperResult({
-        ogImage: '',
-        favicon: 'https://example.com/favicon.ico',
-      })
-      // Act
-      const result = findImage(scraperResult, 'https://example.com/')
-      // Assert
-      expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.imageUrl).toBe('https://example.com/favicon.ico')
-      }
-    })
-
-    it('should return an empty string when both ogImage and favicon are empty', () => {
-      // Arrange
-      const scraperResult = makeScraperResult({ ogImage: '', favicon: '' })
-      // Act
-      const result = findImage(scraperResult, 'https://example.com/')
-      // Assert
-      expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.imageUrl).toBe('')
-      }
-    })
-
-    it('should return ogImage and not favicon when both are set — ogImage takes priority', () => {
-      // Arrange
+    it('should always return a Pollinations image URL regardless of scraperResult image fields', () => {
+      // Arrange: ogImage and favicon both set — they no longer affect output
       const scraperResult = makeScraperResult({
         ogImage: 'https://example.com/og.png',
         favicon: 'https://example.com/favicon.ico',
       })
       // Act
-      const result = findImage(scraperResult, 'https://example.com/')
-      // Assert
+      const result = findImage(scraperResult, 'https://example.com/', 'A test summary.')
+      // Assert: imageUrl always points to Pollinations regardless of scraperResult
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.imageUrl).toBe('https://example.com/og.png')
-        expect(result.data.imageUrl).not.toBe('https://example.com/favicon.ico')
+        expect(result.data.imageUrl).toContain('image.pollinations.ai/prompt/')
+        expect(result.data.imageUrl).not.toContain('og.png')
+        expect(result.data.imageUrl).not.toContain('favicon.ico')
+      }
+    })
+
+    it('should include width=1200, height=630, and nologo=true in the URL', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      // Act
+      const result = findImage(scraperResult, 'https://example.com/', 'A test summary.')
+      // Assert: all required Pollinations query params present
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.imageUrl).toContain('width=1200')
+        expect(result.data.imageUrl).toContain('height=630')
+        expect(result.data.imageUrl).toContain('nologo=true')
+      }
+    })
+
+    it('should include a numeric seed query param derived from the URL', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      // Act
+      const result = findImage(scraperResult, 'https://example.com/', 'A test summary.')
+      // Assert: seed is present and is a non-negative integer
+      expect(result.success).toBe(true)
+      if (result.success) {
+        const match = result.data.imageUrl.match(/seed=(\d+)/)
+        expect(match).not.toBeNull()
+        if (match !== null) {
+          const seed = parseInt(match[1] ?? '0', 10)
+          expect(seed).toBeGreaterThanOrEqual(0)
+        }
       }
     })
 
@@ -95,11 +89,11 @@ describe('findImage', () => {
 
   describe('Group 2 — AgentResult shape', () => {
 
-    it('should return success: true, source: "primary", and a numeric durationMs when ogImage is used', () => {
+    it('should return success: true, source: "primary", and a numeric durationMs', () => {
       // Arrange
-      const scraperResult = makeScraperResult({ ogImage: 'https://example.com/og.png' })
+      const scraperResult = makeScraperResult()
       // Act
-      const result = findImage(scraperResult, 'https://example.com/')
+      const result = findImage(scraperResult, 'https://example.com/', 'A test summary.')
       // Assert
       expect(result).toMatchObject({
         success:    true,
@@ -109,12 +103,12 @@ describe('findImage', () => {
       expect(result.durationMs).toBeGreaterThanOrEqual(0)
     })
 
-    it('should return success: true, source: "primary", and a numeric durationMs even when both images are empty', () => {
-      // Arrange
+    it('should return success: true even when scraperResult images are empty and summary is empty', () => {
+      // Arrange: worst-case input — no images, no summary
       const scraperResult = makeScraperResult({ ogImage: '', favicon: '' })
       // Act
-      const result = findImage(scraperResult, 'https://example.com/')
-      // Assert
+      const result = findImage(scraperResult, 'https://example.com/', '')
+      // Assert: always succeeds — domain fallback guarantees a valid URL
       expect(result).toMatchObject({
         success:    true,
         source:     'primary',
@@ -131,9 +125,9 @@ describe('findImage', () => {
 
     it('should return a plain object immediately without await — not a Promise', () => {
       // Arrange
-      const scraperResult = makeScraperResult({ ogImage: 'https://example.com/og.png' })
+      const scraperResult = makeScraperResult()
       // Act: no await — result must be available synchronously
-      const result = findImage(scraperResult, 'https://example.com/')
+      const result = findImage(scraperResult, 'https://example.com/', 'A test summary.')
       // Assert: Promises have a .then property; plain objects do not
       expect(result).not.toHaveProperty('then')
       expect(result.success).toBe(true)
@@ -141,25 +135,60 @@ describe('findImage', () => {
 
   })
 
-  // ─── Group 4 — Full ScraperResult input ──────────────────────────────────
+  // ─── Group 4 — Prompt construction ───────────────────────────────────────
 
-  describe('Group 4 — full ScraperResult input', () => {
+  describe('Group 4 — prompt construction', () => {
 
-    it('should select ogImage from a fully populated ScraperResult — title, text, and url do not affect the output', () => {
-      // Arrange: all five ScraperResult fields populated
-      const scraperResult: ScraperResult = {
-        title:   'Full Page Title',
-        text:    'Full page body text with lots of content about technology.',
-        ogImage: 'https://example.com/full-og.png',
-        favicon: 'https://example.com/full-favicon.ico',
-        url:     'https://example.com/full-article',
-      }
+    it('should encode the summary text into the Pollinations prompt path', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      const summary       = 'Vercel is a cloud deployment platform.'
       // Act
-      const result = findImage(scraperResult, 'https://example.com/full-article')
-      // Assert: title, text, and url are irrelevant — only ogImage determines imageUrl
+      const result = findImage(scraperResult, 'https://example.com/', summary)
+      // Assert: summary words appear encoded in the URL path
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.imageUrl).toBe('https://example.com/full-og.png')
+        expect(result.data.imageUrl).toContain(encodeURIComponent('Vercel is a cloud'))
+      }
+    })
+
+    it('should fall back to the domain name in the prompt when summary is empty', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      // Act: empty summary triggers domain fallback
+      const result = findImage(scraperResult, 'https://example.com/', '')
+      // Assert: domain appears in the encoded prompt
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.imageUrl).toContain(encodeURIComponent('example.com'))
+      }
+    })
+
+    it('should keep the URL at a reasonable length when summary is 500 chars — the max from sanitiseAiOutput', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      const longSummary   = 'A'.repeat(500)
+      // Act
+      const result = findImage(scraperResult, 'https://example.com/', longSummary)
+      // Assert: prompt is capped at 200 chars before encoding — URL stays manageable
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.imageUrl.length).toBeLessThan(2_000)
+      }
+    })
+
+    it('should return the same URL for identical inputs — seed and prompt are deterministic', () => {
+      // Arrange
+      const scraperResult = makeScraperResult()
+      const summary       = 'A consistent summary for determinism testing.'
+      // Act: two calls with identical args
+      const result1 = findImage(scraperResult, 'https://example.com/', summary)
+      const result2 = findImage(scraperResult, 'https://example.com/', summary)
+      // Assert: output is identical — same seed, same prompt, same URL
+      expect(result1.success).toBe(true)
+      expect(result2.success).toBe(true)
+      if (result1.success && result2.success) {
+        expect(result1.data.imageUrl).toBe(result2.data.imageUrl)
       }
     })
 

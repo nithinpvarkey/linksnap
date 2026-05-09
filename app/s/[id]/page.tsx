@@ -156,11 +156,16 @@ export default async function SharePage(
               </ul>
             )}
 
-            {/* Summary */}
+            {/* Summary — tap to expand */}
             {card.summary && (
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {card.summary}
-              </p>
+              <details className="mt-1">
+                <summary className="cursor-pointer text-sm text-indigo-500 font-medium select-none">
+                  Read summary
+                </summary>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                  {card.summary}
+                </p>
+              </details>
             )}
 
             {/* Footer — original URL + watermark always shown on public page */}

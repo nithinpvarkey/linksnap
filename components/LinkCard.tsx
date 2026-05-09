@@ -48,6 +48,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
   const [imageUrl,         setImageUrl]         = useState('')
   const [imageReceived,    setImageReceived]    = useState(false)
   const [imageError,       setImageError]       = useState(false)
+  const [showOverlay,      setShowOverlay]      = useState(false)
   const [status,           setStatus]           = useState<CardStatus>('loading')
   const [errors,           setErrors]           = useState<Record<string, string>>({})
   const [isRetrying,       setIsRetrying]       = useState<Record<string, boolean>>({})
@@ -56,6 +57,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
 
   const timeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimerRef = useRef<Partial<Record<string, ReturnType<typeof setTimeout>>>>({})
+  const isHoveringRef = useRef(false)
   const onUpgradeRef  = useRef(onUpgradeNeeded)
   onUpgradeRef.current = onUpgradeNeeded
 
@@ -186,6 +188,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
 
     setTitle('');         setSummary('');       setTags([])
     setImageUrl('');      setImageReceived(false);  setImageError(false)
+    setShowOverlay(false)
     setStatus('loading'); setErrors({});        setIsRetrying({})
     setShowShareButtons(false); setCardId('')
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -257,15 +260,38 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
       {!imageReceived ? (
         <div className="aspect-video w-full bg-slate-200 motion-safe:animate-pulse" />
       ) : imageUrl && !imageError ? (
-        <div className="aspect-video w-full relative">
+        <div
+          className="aspect-video w-full relative overflow-hidden cursor-pointer"
+          onMouseEnter={() => { isHoveringRef.current = true; if (summary) setShowOverlay(true) }}
+          onMouseLeave={() => { isHoveringRef.current = false; setShowOverlay(false) }}
+          onClick={() => { if (!isHoveringRef.current && summary) setShowOverlay(prev => !prev) }}
+        >
           <Image
             src={imageUrl}
             alt={title ? `Thumbnail for ${title}` : 'Page thumbnail'}
             fill
-            className="object-cover"
+            className={`object-cover transition-all duration-300 ${showOverlay && summary ? 'scale-105 blur-sm' : 'scale-100'}`}
             unoptimized
             onError={() => { setImageError(true) }}
           />
+
+          {/* Summary overlay — fades in on hover (desktop) or tap (mobile) */}
+          <div
+            className={`absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent transition-opacity duration-300 ${showOverlay && summary ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          >
+            <p className="text-sm text-white leading-relaxed line-clamp-4">{summary}</p>
+          </div>
+
+          {/* Hint — visible when summary is ready but overlay is hidden */}
+          {summary && (
+            <div
+              className={`absolute bottom-2 inset-x-0 flex justify-center pointer-events-none transition-opacity duration-300 ${showOverlay ? 'opacity-0' : 'opacity-100'}`}
+            >
+              <span className="text-xs text-white bg-black/40 rounded-full px-2.5 py-1 select-none">
+                tap for summary
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="aspect-video w-full bg-slate-100 flex items-center justify-center">
@@ -284,7 +310,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
             <div className="h-4 w-2/3 bg-slate-200 rounded motion-safe:animate-pulse" />
           </div>
         ) : (
-          <h2 className="font-semibold text-slate-900 text-lg leading-tight line-clamp-2">
+          <h2 className="font-bold text-slate-900 text-xl leading-tight line-clamp-2">
             {title || (
               <span className="italic font-normal text-slate-400">Unable to fetch title</span>
             )}
@@ -391,7 +417,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
               url={url}
               title={title}
               summary={summary}
-              shareUrl={cardId ? `https://linksnapr.app/s/${cardId}` : undefined}
+              shareUrl={cardId ? `${window.location.origin}/s/${cardId}` : undefined}
             />
           </Suspense>
         )}

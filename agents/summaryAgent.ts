@@ -5,10 +5,12 @@ import { sanitiseAiOutput, extractDomain } from '@/lib/security'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT =
-  'You are a web content analyst. Write exactly 2 lines summarising what this page is about ' +
-  'and why it matters to a reader. Be specific not vague. Never mention that you are an AI.'
+  'Write 3 to 4 sentences summarising the key point of the page content provided. ' +
+  'Be specific — name the actual subject, product, person, or event. ' +
+  'Do not start with "This page", "This article", or "The page". ' +
+  'Write in plain English as if explaining to a curious friend. No AI disclaimers.'
 
-const INPUT_CHAR_LIMIT = 3_000   // chars sent to any model
+const INPUT_CHAR_LIMIT = 4_000   // chars sent to any model
 const OUTPUT_MAX_CHARS = 500     // passed to sanitiseAiOutput
 const CALL_TIMEOUT_MS  = 10_000  // per attempt — not per model total
 const AGENT_NAME       = 'SummaryAgent'
@@ -46,7 +48,7 @@ async function callGemini(text: string): Promise<string> {
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({
-    model:             'gemini-2.5-flash-preview-04-17',
+    model:             'gemini-2.5-flash',
     systemInstruction: SYSTEM_PROMPT,
   })
 
@@ -156,7 +158,7 @@ async function tryModel(
 // ─── Exported function ────────────────────────────────────────────────────────
 
 /**
- * Generates a 2-line summary of the page content using Gemini 2.5 Flash,
+ * Generates a summary of the page content using Gemini 2.5 Flash,
  * falling back to Kimi then DeepSeek if any model fails or times out.
  * Each model gets one retry on timeout — rate limit and API errors skip
  * immediately to the next fallback. Never throws — always returns AgentResult.

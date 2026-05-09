@@ -388,8 +388,8 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
           </Suspense>
         )}
 
-        {/* SnapGIF — Pro only */}
-        {isPro && status === 'complete' && (
+        {/* SnapGIF — Pro downloads, free teaser handled inside SnapGifButton */}
+        {status === 'complete' && (
           <Suspense fallback={null}>
             <SnapGifButton url={url} isPro={isPro} onUpgradeNeeded={onUpgradeNeeded} />
           </Suspense>

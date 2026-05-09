@@ -14,6 +14,20 @@ export interface CachedCard {
   cachedAt: number
 }
 
+/**
+ * The shape of a shareable card stored by ID.
+ * Saved once per snap, read by the public /s/[id] page.
+ */
+export interface ShareableCard {
+  id:        string
+  url:       string
+  title:     string
+  summary:   string
+  tags:      string[]
+  imageUrl:  string
+  createdAt: number
+}
+
 // ─── Private state ────────────────────────────────────────────────────────────
 
 const redis = new Redis({
@@ -21,7 +35,8 @@ const redis = new Redis({
   token: process.env['UPSTASH_REDIS_REST_TOKEN'] ?? '',
 })
 
-const CACHE_TTL_SECONDS = 86_400  // 24 hours
+const CACHE_TTL_SECONDS       = 86_400      // 24 hours — URL-based performance cache
+const SHAREABLE_CARD_TTL_SECS = 2_592_000   // 30 days  — share links stay valid
 
 const TRACKED_PARAMS = new Set([
   'utm_source', 'utm_medium', 'utm_campaign',
@@ -63,7 +78,7 @@ function normaliseUrl(url: string): string {
   return parsed.toString()
 }
 
-// ─── Exported functions ───────────────────────────────────────────────────────
+// ─── Exported functions — URL cache ──────────────────────────────────────────
 
 /**
  * Returns a cached card for the URL if one exists, or null on miss or error.
@@ -94,5 +109,36 @@ export async function setCached(url: string, card: CachedCard): Promise<void> {
     await redis.set(key, card, { ex: CACHE_TTL_SECONDS })
   } catch {
     // Cache failure must never block the response — swallow the error
+  }
+}
+
+// ─── Exported functions — shareable cards ────────────────────────────────────
+
+/**
+ * Saves a shareable card by its ID with a 30-day TTL.
+ * Works in all environments so share links function during local development.
+ * Never throws — silently fails if Redis is unavailable.
+ */
+export async function saveCard(
+  id:   string,
+  data: Omit<ShareableCard, 'id'>,
+): Promise<void> {
+  try {
+    await redis.set(`card:${id}`, { id, ...data }, { ex: SHAREABLE_CARD_TTL_SECS })
+  } catch {
+    // Share card save failure must never block the SSE response
+  }
+}
+
+/**
+ * Reads a shareable card by its ID, or returns null if not found or expired.
+ * Works in all environments so share pages render during local development.
+ * Never throws — silently fails if Redis is unavailable.
+ */
+export async function getCard(id: string): Promise<ShareableCard | null> {
+  try {
+    return await redis.get<ShareableCard>(`card:${id}`)
+  } catch {
+    return null
   }
 }

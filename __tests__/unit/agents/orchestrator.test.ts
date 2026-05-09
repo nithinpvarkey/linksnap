@@ -175,7 +175,7 @@ describe('orchestrate', () => {
       const card = makeCachedCard()
       mockGetCached.mockResolvedValue(card)
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(result).toMatchObject({
         title:            card.title,
@@ -192,7 +192,7 @@ describe('orchestrate', () => {
       const card = makeCachedCard({ tags: ['tag-a'] })
       mockGetCached.mockResolvedValue(card)
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: all four event types present
       expect(mockStream.sendEvent).toHaveBeenCalledWith('image',   { imageUrl: card.imageUrl })
       expect(mockStream.sendEvent).toHaveBeenCalledWith('title',   { title:    card.title    })
@@ -205,7 +205,7 @@ describe('orchestrate', () => {
       const card = makeCachedCard({ tags: ['alpha', 'beta'] })
       mockGetCached.mockResolvedValue(card)
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: image + title + 2 tags + summary = 5 total sendEvent calls
       expect(mockStream.sendEvent).toHaveBeenCalledTimes(5)
       expect(mockStream.sendEvent).toHaveBeenCalledWith('tag', { tag: 'alpha' })
@@ -216,7 +216,7 @@ describe('orchestrate', () => {
       // Arrange
       mockGetCached.mockResolvedValue(makeCachedCard())
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.close).toHaveBeenCalledTimes(1)
     })
@@ -225,7 +225,7 @@ describe('orchestrate', () => {
       // Arrange
       mockGetCached.mockResolvedValue(makeCachedCard())
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: all 4 product agents bypassed entirely
       expect(mockScrapeUrl).toHaveBeenCalledTimes(0)
       expect(mockSummarisePage).toHaveBeenCalledTimes(0)
@@ -242,7 +242,7 @@ describe('orchestrate', () => {
     it('should call all agents with arguments derived from the input URL and scraper data', async () => {
       // Arrange: beforeEach sets getCached → null, scrapeUrl → makeScraperSuccess()
       // Act
-      await orchestrate(TEST_URL, true, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, true, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: scrapeUrl receives the input URL
       expect(mockScrapeUrl).toHaveBeenCalledWith(TEST_URL)
       // Assert: downstream agents receive text and url from scraperData, not the raw input URL
@@ -257,7 +257,7 @@ describe('orchestrate', () => {
     it('should send title, image, summary, and tag events with data from agent results', async () => {
       // Arrange: defaults produce title='Scraped Title', summary='Test summary.', tags=['tech','ai','web']
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.sendEvent).toHaveBeenCalledWith('title',   { title:    'Scraped Title'                })
       expect(mockStream.sendEvent).toHaveBeenCalledWith('image',   { imageUrl: 'https://example.com/og.png'  })
@@ -270,7 +270,7 @@ describe('orchestrate', () => {
     it('should call stream.close() exactly once after all agents settle', async () => {
       // Arrange: defaults from beforeEach
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.close).toHaveBeenCalledTimes(1)
     })
@@ -278,7 +278,7 @@ describe('orchestrate', () => {
     it('should call setCached with the input URL and the assembled card', async () => {
       // Arrange: defaults from beforeEach
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockSetCached).toHaveBeenCalledWith(
         TEST_URL,
@@ -294,7 +294,7 @@ describe('orchestrate', () => {
     it('should return OrchestratorResult with fromCache: false, assembled fields, and agentsDurationMs ≥ 0', async () => {
       // Arrange: defaults from beforeEach
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(result).toMatchObject({
         title:            'Scraped Title',
@@ -317,7 +317,7 @@ describe('orchestrate', () => {
       // Arrange
       mockScrapeUrl.mockResolvedValue(makeScraperFailure('Page could not be fetched'))
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.sendEvent).toHaveBeenCalledWith('error', {
         section: 'scraper',
@@ -329,7 +329,7 @@ describe('orchestrate', () => {
       // Arrange
       mockScrapeUrl.mockResolvedValue(makeScraperFailure())
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.close).toHaveBeenCalledTimes(1)
       expect(mockSummarisePage).toHaveBeenCalledTimes(0)
@@ -342,7 +342,7 @@ describe('orchestrate', () => {
       // Arrange
       mockScrapeUrl.mockResolvedValue(makeScraperFailure())
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(result).toMatchObject({
         title:            '',
@@ -364,7 +364,7 @@ describe('orchestrate', () => {
       // Arrange
       mockSummarisePage.mockResolvedValue(makeSummaryFailure())
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.sendEvent).toHaveBeenCalledWith('error', {
         section: 'summary',
@@ -377,7 +377,7 @@ describe('orchestrate', () => {
       // Arrange
       mockGenerateTags.mockResolvedValue(makeTagsFailure())
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert
       expect(mockStream.sendEvent).toHaveBeenCalledWith('error', {
         section: 'tags',
@@ -391,7 +391,7 @@ describe('orchestrate', () => {
       mockSummarisePage.mockResolvedValue(makeSummaryFailure())
       mockGenerateTags.mockResolvedValue(makeTagsFailure())
       // Act
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: image event is always sent — findImage never returns failure
       expect(mockStream.sendEvent).toHaveBeenCalledWith('image', { imageUrl: 'https://example.com/og.png' })
       expect(result.imageUrl).toBe('https://example.com/og.png')
@@ -402,7 +402,7 @@ describe('orchestrate', () => {
       mockSummarisePage.mockResolvedValue(makeSummaryFailure())
       mockGenerateTags.mockResolvedValue(makeTagsFailure())
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: partial results are worth caching; stream always closed
       expect(mockSetCached).toHaveBeenCalledWith(
         TEST_URL,
@@ -420,7 +420,7 @@ describe('orchestrate', () => {
     it('should send the title event before any parallel agent events — title is sendEvent call index 0', async () => {
       // Arrange: defaults from beforeEach
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: title is sent in Section C before Section D starts Promise.allSettled —
       //         so it is always the first entry in sendEvent.mock.calls
       const firstCall = mockStream.sendEvent.mock.calls[0]
@@ -434,7 +434,7 @@ describe('orchestrate', () => {
       mockStream.sendEvent.mockImplementation(async (event) => { callLog.push(event as string) })
       mockStream.close.mockImplementation(() => { callLog.push('__close__') })
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: stream.close() is called only after Promise.allSettled resolves
       expect(callLog.at(-1)).toBe('__close__')
       // Assert: at least the image event (from runImage) precedes close
@@ -453,7 +453,7 @@ describe('orchestrate', () => {
     it('should call setCached with the input URL and a complete CachedCard including a numeric cachedAt', async () => {
       // Arrange: defaults from beforeEach
       // Act
-      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: cachedAt is stamped inside orchestrate — verify it exists and is a number
       expect(mockSetCached).toHaveBeenCalledWith(
         TEST_URL,
@@ -478,7 +478,7 @@ describe('orchestrate', () => {
         return p
       })
       // Act: must not throw
-      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream)
+      const result = await orchestrate(TEST_URL, false, mockStream as unknown as SseStream, 'test-card-id')
       // Assert: result is unaffected by the cache write failure
       expect(result).toMatchObject({
         title:     'Scraped Title',

@@ -171,16 +171,16 @@ describe('sendEvent', () => {
       expect(text).toBe('event: error\ndata: {"section":"summary","message":"AI failed"}\n\n')
     })
 
-    it('should write a correctly formatted done event with an empty data object', async () => {
+    it('should write a correctly formatted done event with a cardId in the data object', async () => {
       // Arrange
       const { readable, sendEvent } = createSseStream()
       // Act
       const [, text] = await Promise.all([
-        sendEvent('done', {}),
+        sendEvent('done', { cardId: 'test-card-id' }),
         readOneChunk(readable),
       ])
       // Assert
-      expect(text).toBe('event: done\ndata: {}\n\n')
+      expect(text).toBe('event: done\ndata: {"cardId":"test-card-id"}\n\n')
     })
 
   })
@@ -236,11 +236,11 @@ describe('close', () => {
       const { readable, close } = createSseStream()
       const reader = readable.getReader()
       // Act
-      close()
+      close('test-card-id')
       // Assert: first read delivers the done event chunk
       const { value } = await reader.read()
       const text = value !== undefined ? decoder.decode(value) : ''
-      expect(text).toBe('event: done\ndata: {}\n\n')
+      expect(text).toBe('event: done\ndata: {"cardId":"test-card-id"}\n\n')
     })
 
     it('should end the stream — readable returns done:true after the done event is consumed', async () => {
@@ -248,7 +248,7 @@ describe('close', () => {
       const { readable, close } = createSseStream()
       const reader = readable.getReader()
       // Act
-      close()
+      close('test-card-id')
       await reader.read()                  // consume the done event chunk
       const { done } = await reader.read() // next read — stream-end signal
       // Assert
@@ -259,7 +259,7 @@ describe('close', () => {
       // Arrange: drain the readable fully — done:true guarantees the writer is closed
       const { readable, sendEvent, close } = createSseStream()
       const reader = readable.getReader()
-      close()
+      close('test-card-id')
       let streamDone = false
       while (!streamDone) {
         const result = await reader.read()

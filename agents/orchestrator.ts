@@ -1,10 +1,10 @@
 import type { AgentResult, ScraperResult, SummaryResult, TagResult, ImageResult } from '@/lib/types'
 import type { SseStream } from '@/lib/streaming'
 import { getCached, setCached, type CachedCard } from '@/lib/cache'
-import { scrapeUrl } from '@/agents/scraperAgent'
-import { summarisePage } from '@/agents/summaryAgent'
-import { generateTags } from '@/agents/tagAgent'
-import { findImage } from '@/agents/imageAgent'
+import { scrapeUrl }      from '@/agents/scraperAgent'
+import { summarisePage }  from '@/agents/summaryAgent'
+import { generateTags }   from '@/agents/tagAgent'
+import { findImage }      from '@/agents/imageAgent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,9 +27,10 @@ export interface OrchestratorResult {
  * Never throws — always returns OrchestratorResult.
  */
 export async function orchestrate(
-  url: string,
-  isPro: boolean,
+  url:    string,
+  isPro:  boolean,
   stream: SseStream,
+  cardId: string,
 ): Promise<OrchestratorResult> {
   const agentsStart = Date.now()
 
@@ -44,7 +45,7 @@ export async function orchestrate(
       await stream.sendEvent('tag', { tag })
     }
     await stream.sendEvent('summary', { token: cached.summary })
-    stream.close()
+    stream.close(cardId)
     return {
       title:            cached.title,
       summary:          cached.summary,
@@ -61,7 +62,7 @@ export async function orchestrate(
 
   if (!scraperResult.success) {
     await stream.sendEvent('error', { section: 'scraper', message: scraperResult.error })
-    stream.close()
+    stream.close(cardId)
     return {
       title:            '',
       summary:          '',
@@ -136,7 +137,7 @@ export async function orchestrate(
   const imageUrl = imageSettled.status === 'fulfilled' && imageSettled.value.success
     ? imageSettled.value.data.imageUrl  : ''
 
-  stream.close()
+  stream.close(cardId)
 
   // ── Section F: Cache and return ─────────────────────────────────────────────
 

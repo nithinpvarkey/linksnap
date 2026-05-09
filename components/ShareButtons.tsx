@@ -7,9 +7,10 @@ import { trackEvent } from '@/lib/analytics'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ShareButtonsProps {
-  url:     string
-  title:   string
-  summary: string
+  url:       string
+  title:     string
+  summary:   string
+  shareUrl?: string   // card share URL (linksnapr.app/s/[id]) — overrides window.location.href
 }
 
 type ToastState = 'idle' | 'copied' | 'slack'
@@ -71,7 +72,7 @@ function SlackIcon(): JSX.Element {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ShareButtons({ url, title, summary }: ShareButtonsProps): JSX.Element {
+export function ShareButtons({ url, title, summary, shareUrl }: ShareButtonsProps): JSX.Element {
   const [toast, setToast] = useState<ToastState>('idle')
   const timerRef          = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -86,22 +87,24 @@ export function ShareButtons({ url, title, summary }: ShareButtonsProps): JSX.El
   }
 
   async function handleCopy(): Promise<void> {
-    try { await navigator.clipboard.writeText(window.location.href) }
+    try { await navigator.clipboard.writeText(shareUrl ?? window.location.href) }
     catch { /* clipboard unavailable — silent fail */ }
     trackEvent('share_clicked', { platform: 'copy', user_tier: 'free' })
     showToast('copied')
   }
 
   async function handleSlack(): Promise<void> {
-    const message = `*${title}*\n${summary}\n${url}`
+    const link    = shareUrl ?? url
+    const message = `*${title}*\n${summary}\n${link}`
     try { await navigator.clipboard.writeText(message) }
     catch { /* clipboard unavailable — silent fail */ }
     trackEvent('share_clicked', { platform: 'slack', user_tier: 'free' })
     showToast('slack')
   }
 
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${title} — ${url}`)}`
-  const twitterUrl  = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${summary.slice(0, 240)} — ${url}`)}`
+  const link        = shareUrl ?? url
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${title} — ${link}`)}`
+  const twitterUrl  = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${summary.slice(0, 240)} — ${link}`)}`
 
   const base    = 'flex items-center justify-center rounded-lg p-2.5 min-h-[44px] min-w-[44px] transition-colors'
   const idle    = `${base} bg-slate-100 text-slate-600 hover:bg-slate-200`

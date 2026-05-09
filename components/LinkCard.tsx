@@ -52,6 +52,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
   const [errors,           setErrors]           = useState<Record<string, string>>({})
   const [isRetrying,       setIsRetrying]       = useState<Record<string, boolean>>({})
   const [showShareButtons, setShowShareButtons] = useState(false)
+  const [cardId,           setCardId]           = useState('')
 
   const timeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimerRef = useRef<Partial<Record<string, ReturnType<typeof setTimeout>>>>({})
@@ -98,6 +99,8 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
         break
       }
       case 'done': {
+        const d = data as { cardId?: string }
+        if (typeof d.cardId === 'string') setCardId(d.cardId)
         setStatus('complete')
         setShowShareButtons(true)
         if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -184,7 +187,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
     setTitle('');         setSummary('');       setTags([])
     setImageUrl('');      setImageReceived(false);  setImageError(false)
     setStatus('loading'); setErrors({});        setIsRetrying({})
-    setShowShareButtons(false)
+    setShowShareButtons(false); setCardId('')
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
 
     void connectSse(controller.signal)
@@ -384,7 +387,12 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
         {/* Share buttons — visible only after done event */}
         {showShareButtons && (
           <Suspense fallback={null}>
-            <ShareButtons url={url} title={title} summary={summary} />
+            <ShareButtons
+              url={url}
+              title={title}
+              summary={summary}
+              shareUrl={cardId ? `https://linksnapr.app/s/${cardId}` : undefined}
+            />
           </Suspense>
         )}
 

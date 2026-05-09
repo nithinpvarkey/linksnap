@@ -1,9 +1,11 @@
-import { validateUrl, extractDomain } from '@/lib/security'
+import { validateUrl, extractDomain }              from '@/lib/security'
 import { checkRateLimit, incrementConcurrency,
-         decrementConcurrency, getClientIp }  from '@/lib/rateLimit'
-import { checkFreeTier }                      from '@/lib/freeTier'
-import { createSseStream, createHeartbeat, SSE_HEADERS } from '@/lib/streaming'
-import { orchestrate, type OrchestratorResult } from '@/agents/orchestrator'
+         decrementConcurrency, getClientIp }        from '@/lib/rateLimit'
+import { checkFreeTier }                            from '@/lib/freeTier'
+import { createSseStream, createHeartbeat,
+         SSE_HEADERS }                              from '@/lib/streaming'
+import { orchestrate, type OrchestratorResult }    from '@/agents/orchestrator'
+import { saveCard }                                 from '@/lib/cache'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -121,11 +123,25 @@ export async function POST(request: Request): Promise<Response> {
   const stopHeartbeat = createHeartbeat(sseStream)
 
   // I — Fire orchestrate in background, return SSE response immediately.
-  // The IIFE contains try-catch-finally so cleanup always runs even if
-  // orchestrate throws or the error-event send itself fails.
+  // cardId is generated here so it is available in both the try block
+  // (passed to orchestrate) and the catch block (passed to sseStream.close).
   void (async (): Promise<void> => {
+    const cardId = crypto.randomUUID()
     try {
-      const result: OrchestratorResult = await orchestrate(url, isPro, sseStream)
+      const result: OrchestratorResult = await orchestrate(url, isPro, sseStream, cardId)
+
+      // Save shareable card to Redis — only when scraper succeeded (title is present).
+      // Fire-and-forget: stream is already closed, this must not block anything.
+      if (result.title !== '') {
+        void saveCard(cardId, {
+          url,
+          title:     result.title,
+          summary:   result.summary,
+          tags:      result.tags,
+          imageUrl:  result.imageUrl,
+          createdAt: Date.now(),
+        })
+      }
 
       if (process.env['NODE_ENV'] !== 'production') {
         console.log({
@@ -150,7 +166,7 @@ export async function POST(request: Request): Promise<Response> {
           section: 'server',
           message: 'An unexpected error occurred',
         })
-        sseStream.close()
+        sseStream.close(cardId)
       } catch {
         // Stream may already be closed by orchestrate — ignore
       }

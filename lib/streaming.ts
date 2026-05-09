@@ -8,7 +8,7 @@ interface SsePayloads {
   tag:     { tag: string }
   summary: { token: string }
   error:   { section: string; message: string }
-  done:    Record<string, never>
+  done:    { cardId: string }
 }
 
 /**
@@ -16,13 +16,13 @@ interface SsePayloads {
  * Pass readable to the HTTP response.
  * Call sendEvent once per result as each agent finishes.
  * Call writeRaw for SSE comments — used internally by createHeartbeat.
- * Call close when all agents are done — sends done event and ends the stream.
+ * Call close when all agents are done — sends done event with cardId and ends the stream.
  */
 export interface SseStream {
   readable:  ReadableStream<Uint8Array>
   sendEvent<T extends SseEventType>(type: T, data: SsePayloads[T]): Promise<void>
   writeRaw(text: string): Promise<void>
-  close(): void
+  close(cardId: string): void
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ export function createSseStream(): SseStream {
     await writeChunk(encoder.encode(text))
   }
 
-  function close(): void {
-    const chunk = encoder.encode(formatSseEvent('done', {}))
+  function close(cardId: string): void {
+    const chunk = encoder.encode(formatSseEvent('done', { cardId }))
     void writer.write(chunk).then(() => writer.close())
   }
 

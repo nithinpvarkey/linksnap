@@ -385,7 +385,7 @@ describe('POST /api/summarise', () => {
       await POST(makeRequest({ url: TEST_URL }))
       await new Promise<void>(resolve => { setImmediate(resolve) })
       // Assert: isPro is hardcoded false in the MVP (Section G)
-      expect(mockOrchestrate).toHaveBeenCalledWith(TEST_URL, false, mockStream)
+      expect(mockOrchestrate).toHaveBeenCalledWith(TEST_URL, false, mockStream, expect.any(String))
     })
 
   })

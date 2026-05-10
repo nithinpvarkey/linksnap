@@ -22,11 +22,16 @@ function buildFailure(error: string, durationMs: number): AgentResult<TagResult>
   return { success: false, error, source: 'primary', durationMs }
 }
 
-function buildSystemPrompt(tagCount: number): string {
+function buildSystemPrompt(tagCount: number, title: string): string {
   return (
-    `You are a content classifier. Generate exactly ${tagCount} short tags for this web page. ` +
-    'Return only a JSON array of strings. Example: ["tag1","tag2","tag3"] ' +
-    'Tags must be 1-3 words each. No explanations.'
+    `Generate exactly ${tagCount} tags for this webpage. ` +
+    `Page title: "${title}". ` +
+    'Use the title and any content to generate relevant tags. ' +
+    'Tags must describe the actual topic of the page. ' +
+    'Never generate meta tags like "content classifier" or "web page". ' +
+    'If content is minimal use the title to infer the topic. ' +
+    'Return only a JSON array. Example: ["UI design","web tools","templates"]. ' +
+    'Each tag 1-3 words. No explanations.'
   )
 }
 
@@ -134,7 +139,7 @@ async function callGemini(text: string, systemPrompt: string): Promise<string> {
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({
-    model:             'gemini-2.5-flash-preview-04-17',
+    model:             'gemini-2.5-flash',
     systemInstruction: systemPrompt,
     generationConfig:  { maxOutputTokens: 100 },
   })
@@ -193,19 +198,21 @@ async function tryModel(
 /**
  * Generates 3 tags (free tier) or 5 tags (Pro) using Qwen as primary,
  * falling back through Gemini, DeepSeek, and GLM-5 if any model fails.
- * AI output is parsed as a JSON array — each tag is individually sanitised.
+ * Title is included in the system prompt so thin-content pages still get
+ * relevant tags. AI output is parsed as a JSON array — each tag sanitised.
  * Never throws — always returns AgentResult.
  */
 export async function generateTags(
-  text: string,
-  url: string,
+  text:  string,
+  url:   string,
   isPro: boolean,
+  title: string,
 ): Promise<AgentResult<TagResult>> {
   const start        = Date.now()
   const domain       = extractDomain(url)
   const tagCount     = isPro ? 5 : 3
   const truncated    = text.slice(0, INPUT_CHAR_LIMIT)
-  const systemPrompt = buildSystemPrompt(tagCount)
+  const systemPrompt = buildSystemPrompt(tagCount, title)
 
   const models = [
     {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
-import Image from 'next/image'
 import dynamic from 'next/dynamic'
+import Image   from 'next/image'
 import type { JSX } from 'react'
 import { SkeletonCard } from '@/components/SkeletonCard'
 import { trackEvent }   from '@/lib/analytics'
@@ -47,6 +47,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
   const [tags,             setTags]             = useState<string[]>([])
   const [imageUrl,         setImageUrl]         = useState('')
   const [imageReceived,    setImageReceived]    = useState(false)
+  const [imageLoaded,      setImageLoaded]      = useState(false)
   const [imageError,       setImageError]       = useState(false)
   const [showOverlay,      setShowOverlay]      = useState(false)
   const [status,           setStatus]           = useState<CardStatus>('loading')
@@ -68,7 +69,6 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
       case 'image': {
         const d = data as { imageUrl?: string }
         setImageReceived(true)
-        setImageError(false)
         setImageUrl(typeof d.imageUrl === 'string' ? d.imageUrl : '')
         break
       }
@@ -187,7 +187,7 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
     const controller = new AbortController()
 
     setTitle('');         setSummary('');       setTags([])
-    setImageUrl('');      setImageReceived(false);  setImageError(false)
+    setImageUrl('');      setImageReceived(false);  setImageLoaded(false);  setImageError(false)
     setShowOverlay(false)
     setStatus('loading'); setErrors({});        setIsRetrying({})
     setShowShareButtons(false); setCardId('')
@@ -266,13 +266,17 @@ export function LinkCard({ url, isPro, onUpgradeNeeded }: LinkCardProps): JSX.El
           onMouseLeave={() => { isHoveringRef.current = false; setShowOverlay(false) }}
           onClick={() => { if (!isHoveringRef.current && summary) setShowOverlay(prev => !prev) }}
         >
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-slate-200 motion-safe:animate-pulse" />
+          )}
           <Image
+            fill
             src={imageUrl}
             alt={title ? `Thumbnail for ${title}` : 'Page thumbnail'}
-            fill
             className={`object-cover transition-all duration-300 ${showOverlay && summary ? 'scale-105 blur-sm' : 'scale-100'}`}
-            unoptimized
-            onError={() => { setImageError(true) }}
+            sizes="(max-width: 640px) 100vw, 640px"
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
           />
 
           {/* Summary overlay — fades in on hover (desktop) or tap (mobile) */}

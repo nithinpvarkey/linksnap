@@ -23,8 +23,9 @@ export interface OrchestratorResult {
  * Runs all 4 product agents and streams results to the browser as each resolves.
  * Checks Vercel KV cache first — cache hits stream instantly without calling any agent.
  * Scraper failure is the only case that stops everything — all other agent failures
- * return partial results. Manages the complete stream lifecycle: open → events → close.
- * Never throws — always returns OrchestratorResult.
+ * return partial results. All 3 agents run in parallel — image reads og:image from
+ * the scraper result so it has no dependency on summary.
+ * Manages the complete stream lifecycle. Never throws — always returns OrchestratorResult.
  */
 export async function orchestrate(
   url:    string,
@@ -83,7 +84,8 @@ export async function orchestrate(
 
   await stream.sendEvent('title', { title })
 
-  // ── Section D: Tags parallel throughout — summary first — image after summary
+  // ── Section D: All 3 agents run in parallel ─────────────────────────────────
+  // Image reads og:image from scraperData — no dependency on summary.
 
   const runSummary = async (): Promise<AgentResult<SummaryResult>> => {
     const result = await summarisePage(text, title, finalUrl)
@@ -96,7 +98,7 @@ export async function orchestrate(
   }
 
   const runTags = async (): Promise<AgentResult<TagResult>> => {
-    const result = await generateTags(text, finalUrl, isPro)
+    const result = await generateTags(text, finalUrl, isPro, title)
     if (result.success) {
       for (const tag of result.data.tags) {
         await stream.sendEvent('tag', { tag })
@@ -107,30 +109,28 @@ export async function orchestrate(
     return result
   }
 
-  const runImage = async (summaryText: string): Promise<AgentResult<ImageResult>> => {
-    const result   = findImage(scraperData, finalUrl, summaryText)
+  const runImage = async (): Promise<AgentResult<ImageResult>> => {
+    const result   = await findImage(scraperData, finalUrl, '', title)
     const imageUrl = result.success ? result.data.imageUrl : ''
     await stream.sendEvent('image', { imageUrl })
     return result
   }
 
-  // Tags starts immediately and runs throughout.
-  // Summary runs first — its result feeds the Pollinations image prompt.
-  // Image starts the moment summary resolves, races tags to finish.
-  const tagsPromise   = runTags()
-  const summaryResult = await runSummary()
-  const summaryText   = summaryResult.success ? summaryResult.data.summary : ''
-
-  const [tagsResult, imageResult] = await Promise.all([
-    tagsPromise,
-    runImage(summaryText),
-  ])
+  // All 3 fire simultaneously — each streams its result the moment it resolves.
+  const settled = await Promise.allSettled([runSummary(), runTags(), runImage()])
 
   // ── Section E: Assemble result and close stream ─────────────────────────────
 
-  const summary  = summaryResult.success ? summaryResult.data.summary  : ''
-  const tags     = tagsResult.success    ? tagsResult.data.tags         : []
-  const imageUrl = imageResult.success   ? imageResult.data.imageUrl    : ''
+  const summarySettled = settled[0] as PromiseSettledResult<AgentResult<SummaryResult>>
+  const tagsSettled    = settled[1] as PromiseSettledResult<AgentResult<TagResult>>
+  const imageSettled   = settled[2] as PromiseSettledResult<AgentResult<ImageResult>>
+
+  const summary  = summarySettled.status === 'fulfilled' && summarySettled.value.success
+    ? summarySettled.value.data.summary : ''
+  const tags     = tagsSettled.status === 'fulfilled' && tagsSettled.value.success
+    ? tagsSettled.value.data.tags       : []
+  const imageUrl = imageSettled.status === 'fulfilled' && imageSettled.value.success
+    ? imageSettled.value.data.imageUrl  : ''
 
   stream.close(cardId)
 

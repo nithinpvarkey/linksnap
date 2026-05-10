@@ -118,7 +118,7 @@ describe('generateTags', () => {
     it('should return exactly 3 tags and source primary when isPro is false', async () => {
       // Arrange: default mock returns 5 tags — parseTags slices to tagCount 3
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: full AgentResult shape — exactly 3 string tags
       expect(result).toMatchObject({
         success:    true,
@@ -136,7 +136,7 @@ describe('generateTags', () => {
     it('should return exactly 5 tags and source primary when isPro is true', async () => {
       // Arrange: default mock returns 5 tags — parseTags slices to tagCount 5
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', true)
+      const result = await generateTags('Page content', 'https://example.com/', true, 'Test Page Title')
       // Assert
       expect(result).toMatchObject({
         success:    true,
@@ -159,7 +159,7 @@ describe('generateTags', () => {
       // Arrange: Qwen returns a clean JSON array
       mockFetch.mockResolvedValue(mockOpenRouterSuccess(['technology', 'ai', 'news']))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert
       expect(result).toMatchObject({
         success: true, source: 'primary', durationMs: expect.any(Number),
@@ -172,7 +172,7 @@ describe('generateTags', () => {
       const fenced = '```json\n["technology","ai","news"]\n```'
       mockFetch.mockResolvedValue(mockOpenRouterSuccessRaw(fenced))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: fences stripped, underlying JSON parsed correctly
       expect(result).toMatchObject({
         success: true, source: 'primary', durationMs: expect.any(Number),
@@ -185,7 +185,7 @@ describe('generateTags', () => {
       mockFetch.mockResolvedValue(mockOpenRouterSuccessRaw('not valid json at all'))
       // mockGenerateContent default: returns valid 5-tag array
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: Qwen parse failed → fell back to Gemini (source: fallback)
       expect(result).toMatchObject({
         success: true, source: 'fallback', durationMs: expect.any(Number),
@@ -197,7 +197,7 @@ describe('generateTags', () => {
       //          parseTags returns null for the entire array → Gemini tried
       mockFetch.mockResolvedValue(mockOpenRouterSuccessRaw(JSON.stringify([1, 2, 'valid'])))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: isStringArray check failed → fell back to Gemini
       expect(result).toMatchObject({
         success: true, source: 'fallback', durationMs: expect.any(Number),
@@ -209,7 +209,7 @@ describe('generateTags', () => {
       const oversized = 'a'.repeat(51)
       mockFetch.mockResolvedValue(mockOpenRouterSuccess(['short', oversized, 'tag3']))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: oversized tag removed; 2 valid tags returned from Qwen (source: primary)
       expect(result).toMatchObject({ success: true, source: 'primary', durationMs: expect.any(Number) })
       if (result.success) {
@@ -224,7 +224,7 @@ describe('generateTags', () => {
         mockOpenRouterSuccess(['a'.repeat(51), 'b'.repeat(60)]),
       )
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: Qwen's array emptied after filter → fell back to Gemini
       expect(result).toMatchObject({
         success: true, source: 'fallback', durationMs: expect.any(Number),
@@ -235,7 +235,7 @@ describe('generateTags', () => {
       // Arrange: 3 valid tags — parseTags calls sanitiseAiOutput for each
       mockFetch.mockResolvedValue(mockOpenRouterSuccess(['tagA', 'tagB', 'tagC']))
       // Act
-      await generateTags('Page content', 'https://example.com/', false)
+      await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: sanitiseAiOutput called exactly 3 times — once per tag, always with max 50
       expect(mockSanitise).toHaveBeenCalledTimes(3)
       expect(mockSanitise).toHaveBeenCalledWith('tagA', 50)
@@ -264,7 +264,7 @@ describe('generateTags', () => {
           )
           .mockResolvedValueOnce(mockOpenRouterSuccess(['tag1', 'tag2', 'tag3']))
         // Act
-        const resultPromise = generateTags('Page content', 'https://example.com/', false)
+        const resultPromise = generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
         await Promise.resolve()          // flush pending microtasks before advancing clock
         jest.advanceTimersByTime(10_001) // fire attempt-1 timeout
         const result = await resultPromise
@@ -286,7 +286,7 @@ describe('generateTags', () => {
           (): Promise<Response> => new Promise(() => { /* intentionally never resolves */ }),
         )
         // Act
-        const resultPromise = generateTags('Page content', 'https://example.com/', false)
+        const resultPromise = generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
         await Promise.resolve()          // flush before first timer advance
         jest.advanceTimersByTime(10_001) // fire attempt-1 timeout
         await Promise.resolve()          // let catch block run and register attempt-2 setTimeout
@@ -307,7 +307,7 @@ describe('generateTags', () => {
       mockFetch.mockResolvedValue(mockOpenRouterFailure(429))
       // mockGenerateContent default: returns valid tags
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: fetch called exactly once (no Qwen retry), Gemini succeeded
       expect(mockFetch).toHaveBeenCalledTimes(1)
       expect(result).toMatchObject({
@@ -324,7 +324,7 @@ describe('generateTags', () => {
         .mockResolvedValueOnce(mockOpenRouterSuccess(['t1', 't2', 't3', 't4', 't5']))
       mockGeminiFailure(new Error('Gemini error'))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: source is 'fallback' — DeepSeek is the third model
       expect(result).toMatchObject({
         success:    true,
@@ -341,7 +341,7 @@ describe('generateTags', () => {
         .mockResolvedValueOnce(mockOpenRouterSuccess(['t1', 't2', 't3', 't4', 't5']))
       mockGeminiFailure(new Error('Gemini error'))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: source is 'fallback' — GLM-5 is the fourth model
       expect(result).toMatchObject({
         success:    true,
@@ -355,7 +355,7 @@ describe('generateTags', () => {
       mockFetch.mockResolvedValue(mockOpenRouterFailure(500))
       mockGeminiFailure(new Error('Gemini error'))
       // Act
-      const result = await generateTags('Page content', 'https://example.com/', false)
+      const result = await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: source is 'primary' — buildFailure hardcodes 'primary'
       expect(result).toMatchObject({
         success:    false,
@@ -375,7 +375,7 @@ describe('generateTags', () => {
       // Arrange: 3 000-char text — only first 2 000 reach the model
       const longText = 'b'.repeat(3_000)
       // Act
-      await generateTags(longText, 'https://example.com/', false)
+      await generateTags(longText, 'https://example.com/', false, 'Test Page Title')
       // Assert: fetch body user message contains exactly 2 000 'b' chars — not 2 001
       //         buildUserMessage wraps: "Page content:\n\n" + truncated
       expect(mockFetch).toHaveBeenCalledWith(
@@ -395,7 +395,7 @@ describe('generateTags', () => {
     it('should embed "exactly 3" in the system prompt when isPro is false', async () => {
       // Arrange: default mocks; Qwen serves
       // Act
-      await generateTags('Page content', 'https://example.com/', false)
+      await generateTags('Page content', 'https://example.com/', false, 'Test Page Title')
       // Assert: Qwen fetch body system message contains the free-tier tag count
       expect(mockFetch).toHaveBeenCalledWith(
         expect.anything(),
@@ -414,7 +414,7 @@ describe('generateTags', () => {
     it('should embed "exactly 5" in the system prompt when isPro is true', async () => {
       // Arrange: default mocks; Qwen serves
       // Act
-      await generateTags('Page content', 'https://example.com/', true)
+      await generateTags('Page content', 'https://example.com/', true, 'Test Page Title')
       // Assert: Qwen fetch body system message contains the Pro-tier tag count
       expect(mockFetch).toHaveBeenCalledWith(
         expect.anything(),
@@ -432,7 +432,7 @@ describe('generateTags', () => {
 
     it('should call extractDomain with the url parameter', async () => {
       // Act
-      await generateTags('Page content', 'https://example.com/article', false)
+      await generateTags('Page content', 'https://example.com/article', false, 'Test Page Title')
       // Assert
       expect(mockExtractDomain).toHaveBeenCalledWith('https://example.com/article')
     })

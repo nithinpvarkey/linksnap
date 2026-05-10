@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV === 'development';
 //   unsafe-eval  — Next.js hot module replacement requires it in dev only
 //   unsafe-inline — Tailwind CSS requires it for style injection
 //   ws:/wss:     — Next.js dev server uses WebSocket for HMR
-//   img-src https: — og:images load from any HTTPS source (Phase 2)
+//   img-src https: — og:images load from any HTTPS source
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
@@ -48,7 +48,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'image.pollinations.ai',
+        hostname: '**',
       },
     ],
   },

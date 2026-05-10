@@ -43,7 +43,7 @@ export function ShareableCard({
             src={imageUrl}
             alt={title ? `Thumbnail for ${title}` : 'Page thumbnail'}
             fill
-            className={`object-cover transition-all duration-300 ${showOverlay && summary ? 'scale-105 blur-sm' : 'scale-100'}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${showOverlay && summary ? 'scale-105 blur-sm' : 'scale-100'}`}
             unoptimized
           />
 

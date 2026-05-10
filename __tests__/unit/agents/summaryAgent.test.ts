@@ -325,16 +325,16 @@ describe('summarisePage', () => {
 
   describe('Group 4 — input handling', () => {
 
-    it('should truncate input text to exactly 3 000 characters before sending to the model', async () => {
-      // Arrange: 4 000-char text — only first 3 000 chars should reach generateContent
-      const longText = 'b'.repeat(4_000)
+    it('should truncate input text to exactly 4 000 characters before sending to the model', async () => {
+      // Arrange: 5 000-char text — only first 4 000 chars should reach generateContent
+      const longText = 'b'.repeat(5_000)
       // Act
       await summarisePage(longText, 'Test page title', 'https://example.com/')
-      // Assert: the prompt passed to generateContent contains exactly 3 000 'b' chars,
-      //         not 3 001 — buildUserMessage wraps the truncated text as "Page content:\n\n<text>"
+      // Assert: the prompt passed to generateContent contains exactly 4 000 'b' chars,
+      //         not 4 001 — buildUserMessage wraps the truncated text as "Page title:...\n\nPage content:\n\n<text>"
       const prompt = mockGenerateContent.mock.calls[0]?.[0] ?? ''
-      expect(prompt).toContain('b'.repeat(3_000))
-      expect(prompt).not.toContain('b'.repeat(3_001))
+      expect(prompt).toContain('b'.repeat(4_000))
+      expect(prompt).not.toContain('b'.repeat(4_001))
     })
 
     it('should call extractDomain with the url parameter', async () => {
